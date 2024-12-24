@@ -1,6 +1,10 @@
 # Spike Sorting Pipeline
 Jupyter notebook to analyze and sort spike based on their morphology recorded via microneurography and another notebook to evaluate and create visualization of the results.
 
+## How to cite
+
+[![DOI](https://zenodo.org/badge/823592712.svg)](https://doi.org/10.5281/zenodo.14552209)
+
 ## Setup Instructions
 
 1. Clone the repository or download the ZIP file.
