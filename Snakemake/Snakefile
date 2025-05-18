@@ -1,0 +1,150 @@
+configfile: "config.yaml"
+
+DATASETS = list(config["datasets"].keys())
+
+def get_recordings(wildcards):
+    print(config["datasets"][wildcards.dataset])
+    return config["datasets"][wildcards.dataset]["path"]
+
+# Define score metrics (based on your data)
+CLF_METRICS = [
+    "Accuracy", "Precision", "Recall", "F1-score"
+]
+
+CLUSTER_METRICS = [
+    "V-measure", "Rand index", "ARI", "MI", "NMI",
+    "AMI", "Homogeneity", "FMI", "Completeness", "Accuracy"
+]
+
+ERRORS = ["MSE", "MAE", "RMSE"]
+
+
+rule all:
+    input:
+        expand("results_testset/classification_split/{metric}.csv", metric=CLF_METRICS),
+        expand("results_testset/clustering_split/{metric}.csv", metric=CLUSTER_METRICS)
+        
+
+rule template_similarity:
+    input:
+        ap_templates=lambda wildcards: f"workflow_output/templates/{wildcards.dataset}_ap_templates.pkl"
+    output:
+        template_similarity= "results_new_al_no_filter/errors/{dataset}_template_similarity.pkl"
+    script:
+        "scripts/compute_template_errors.py"
+
+
+rule collect_classification_scores:
+    input:
+        scores=expand("workflow/results_testset/classification/{dataset}_classification_scores.pkl", dataset=DATASETS)
+    output:
+        expand("results_testset/classification_split/{metric}.csv", metric=CLF_METRICS)
+    script:
+        "scripts/collect_scores.py"
+
+rule collect_clustering_scores:
+    input:
+        scores=expand("workflow/results_testset/clustering/{dataset}_clustering_scores.pkl", dataset=DATASETS)
+    output:
+        expand("results_testset/clustering_split/{metric}.csv", metric=CLUSTER_METRICS)
+    script:
+        "scripts/collect_scores.py"
+
+rule classification:
+    input:
+        spikes=lambda wildcards: f"workflow/{wildcards.dataset}_spikes.pkl",
+        features_ss_spdf=lambda wildcards: f"workflow/features/{wildcards.dataset}_features_ss_spdf.pkl",
+        features_simple=lambda wildcards: f"workflow/features/{wildcards.dataset}_features_simple.pkl",
+        features_raw=lambda wildcards: f"workflow/features/{wildcards.dataset}_features_raw.pkl",
+        templates=lambda wildcards: f"workflow/templates/{wildcards.dataset}_ap_templates.pkl"
+    output: 
+        classification_results="workflow/results_testset/classification/{dataset}_classification_scores.pkl",
+    params:
+        name=lambda wildcards: config["datasets"][wildcards.dataset]["name"],
+    script:
+        "scripts/classification.py"
+
+rule clustering:
+    input:
+        spikes=lambda wildcards: f"workflow/{wildcards.dataset}_spikes.pkl",
+        features_ss_spdf=lambda wildcards: f"workflow/features/{wildcards.dataset}_features_ss_spdf.pkl",
+        features_simple=lambda wildcards: f"workflow/features/{wildcards.dataset}_features_simple.pkl",
+        features_raw=lambda wildcards: f"workflow/features/{wildcards.dataset}_features_raw.pkl"
+    output: 
+        clustering_result="workflow/results_testset/clustering/{dataset}_clustering_scores.pkl",
+    params:
+        name=lambda wildcards: config["datasets"][wildcards.dataset]["name"],
+    script:
+        "scripts/clustering.py"
+
+rule feature_extraction:
+    input:
+        raw_data=lambda wildcards: f"workflow/{wildcards.dataset}_raw_data.pkl",
+        spikes=lambda wildcards: f"workflow/{wildcards.dataset}_spikes.pkl",
+        ap_derivatives=lambda wildcards: f"workflow/pre_processing/{wildcards.dataset}_ap_derivatives.pkl",
+        ap_track_window_m=lambda wildcards: f"workflow/pre_processing/{wildcards.dataset}_ap_track_window_modified.pkl",
+        ap_window_iloc=lambda wildcards: f"workflow/pre_processing/{wildcards.dataset}_ap_window_iloc.pkl"
+    output:
+        features_ss_spdf="workflow/features/{dataset}_features_ss_spdf.pkl",
+        features_simple="workflow/features/{dataset}_features_simple.pkl",
+        features_raw="workflow/features/{dataset}_features_raw.pkl",
+        length_df="workflow/spike_numbers/{dataset}_length_df.csv",
+        simple_features_figure="workflow/features/figures/{dataset}_simple_features.png",
+        ss_spdf_features_figure="workflow/features/figures/{dataset}_ss_spdf_features.png"
+    params:
+        use_bristol_processing=lambda wildcards: config["datasets"][wildcards.dataset]["flags"]["use_bristol_processing"],
+        name=lambda wildcards: config["datasets"][wildcards.dataset]["name"]
+    script:
+        "scripts/feature_extraction.py"
+
+rule template_and_filtering:
+    input:
+        raw_data=lambda wildcards: f"workflow/{wildcards.dataset}_raw_data.pkl",
+        ap_derivatives=lambda wildcards: f"workflow/pre_processing/{wildcards.dataset}_ap_derivatives.pkl",
+        ap_track_window=lambda wildcards: f"workflow/pre_processing/{wildcards.dataset}_ap_track_window.pkl",
+        ap_window_iloc=lambda wildcards: f"workflow/pre_processing/{wildcards.dataset}_ap_window_iloc.pkl",
+        spikes=lambda wildcards: f"workflow/{wildcards.dataset}_spikes.pkl"
+    output:
+        ap_track_window_m="workflow/pre_processing/{dataset}_ap_track_window_modified.pkl",
+        ap_templates="workflow/templates/{dataset}_ap_templates.pkl",
+        template_figure="workflow/templates/{dataset}_templates.png",
+        waveform_figure="workflow/templates/{dataset}_waveforms.png"
+    params:
+        use_bristol_processing=lambda wildcards: config["datasets"][wildcards.dataset]["flags"]["use_bristol_processing"]
+    script:
+        "scripts/templates_and_filtering.py"
+
+rule pre_process_data:
+    input:
+        raw_data=lambda wildcards: f"workflow/{wildcards.dataset}_raw_data.pkl",
+        stimulations=lambda wildcards: f"workflow/{wildcards.dataset}_stimulations.pkl",
+        spikes=lambda wildcards: f"workflow/{wildcards.dataset}_spikes.pkl"
+    output: 
+        ap_window_iloc="workflow/pre_processing/{dataset}_ap_window_iloc.pkl",
+        ap_derivatives="workflow/pre_processing/{dataset}_ap_derivatives.pkl",
+        ap_track_window="workflow/pre_processing/{dataset}_ap_track_window.pkl",
+    params:
+        name=lambda wildcards: config["datasets"][wildcards.dataset]["name"],
+        path_dapsys=lambda wildcards: config["datasets"][wildcards.dataset]["path_dapsys"],
+        use_bristol_processing=lambda wildcards: config["datasets"][wildcards.dataset]["flags"]["use_bristol_processing"],
+    script:
+        "scripts/pre_processing.py"
+
+rule read_in_data:
+    input:
+        get_recordings
+    output: 
+        raw_data="workflow/{dataset}_raw_data.pkl",
+        stimulations="workflow/{dataset}_stimulations.pkl",
+        spikes="workflow/{dataset}_spikes.pkl",
+        nix_file= "datasets/nix/{dataset}.nix",
+    params:
+        name=lambda wildcards: config["datasets"][wildcards.dataset]["name"],
+        path_dapsys=lambda wildcards: config["datasets"][wildcards.dataset]["path_dapsys"],
+        path_nix=lambda wildcards: config["datasets"][wildcards.dataset]["path_nix"],
+        use_bristol_processing=lambda wildcards: config["datasets"][wildcards.dataset]["flags"]["use_bristol_processing"],
+        time1=lambda wildcards: config["datasets"][wildcards.dataset]["time1"],
+        time2=lambda wildcards: config["datasets"][wildcards.dataset]["time2"],
+        tracks_to_ignore=lambda wildcards: config["datasets"].get(wildcards.dataset, {}).get("tracks_to_ignore", [])
+    script:
+        "scripts/read_in_data.py"

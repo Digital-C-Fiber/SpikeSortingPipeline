@@ -1,0 +1,11 @@
+datasets:
+  Testset_1:
+    path: "datasets_test/testset_1.dps"
+    path_nix: "datasets_test/nix/testsets_1.nix"
+    name: "testset_1"
+    path_dapsys: "NI Puls Stimulator/Continuous Recording"
+    flags:
+      use_bristol_processing: false 
+    time1: 200
+    time2: 922
+  
