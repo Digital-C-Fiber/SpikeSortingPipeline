@@ -2,8 +2,8 @@ from snakemake.script import snakemake
 import pandas as pd
 from pathlib import Path
 
-input_files = snakemake.input  
-output_files = snakemake.output  
+input_files = snakemake.input
+output_files = snakemake.output
 
 # Get output directory from one of the files
 output_dir = Path(output_files[0]).parent
@@ -14,7 +14,7 @@ all_metrics = {}
 # Collect all scores into per-metric dataframes
 for file in input_files:
     df = pd.read_pickle(file)
-    dataset_name = Path(file).stem.split('_')[0]  
+    dataset_name = Path(file).stem.split("_")[0]
 
     for metric in df.index:
         row = df.loc[metric].to_frame().T

@@ -8,7 +8,6 @@ from sklearn import metrics
 from sklearn.preprocessing import LabelEncoder
 from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans
-import seaborn as sns
 from sklearn.metrics import confusion_matrix, accuracy_score
 
 
@@ -54,7 +53,6 @@ def cluster_pca_features(df_tracks, df_no_tracks, dataset_name, color_palette,n_
     #df_no_tracks = df_no_tracks.dropna(axis=1)
     #df_tracks = df_tracks.dropna(axis=1)
     # transform to pca features
-    print(len(df_tracks), len(df_no_tracks))
     pca_features = pca.fit_transform(df_no_tracks)
     # create df
     if dim == 2:
@@ -182,7 +180,6 @@ features_raw_tracks = features_raw\
 #features_raw_tracks = features_raw_tracks.dropna(axis=0)
 #features_raw = features_raw.dropna(axis=0)
 
-#print(features_raw_tracks.head())
 #features_raw_X = pd.DataFrame(features_raw["raw"].to_list(), columns=np.arange(0,len(features_raw["raw"].iloc[0])))
 cluster_pca_features(features_raw_tracks, features_raw, dataset_name, track_colors, n_cluster, key= "PCA of raw signal", feature_name="FS4")
 cluster_pca_features(features_raw_tracks, features_raw, dataset_name, track_colors, n_cluster, key= "PCA of raw signal", feature_name="FS5", dim=3)
