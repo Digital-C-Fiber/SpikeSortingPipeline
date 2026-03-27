@@ -1,6 +1,6 @@
 #  Spike Sorting Pipeline
 
-This repository provides a reproducible pipeline for preprocessing, sorting, and analyzing spikes based on different feature sets (amplitude and widht, features from the SS-SPDF method [Caro-Martín et al., 2018](https://pubmed.ncbi.nlm.nih.gov/30542106/), raw waveform)  via **microneurography**—using **[Snakemake](https://snakemake.readthedocs.io/en/stable/)** and modular Python scripts. It also includes a Jupyter notebook for evaluating and visualizing classification results (e.g., heatmaps of accuracy).
+This repository provides a reproducible pipeline for preprocessing, sorting, and analyzing spikes based on different feature sets (amplitude and width, features from the SS-SPDF method [Caro-Martín et al., 2018](https://pubmed.ncbi.nlm.nih.gov/30542106/), raw waveform)  via **microneurography**-using **[Snakemake](https://snakemake.readthedocs.io/en/stable/)** and modular Python scripts. It also includes a Jupyter notebook for evaluating and visualizing classification results (e.g., heatmaps of accuracy).
 
 The pipeline supports proprietary data formats like **Dapsys** and the process data format **HDF5/NIX**, converts them to a unified **NIX** format, and executes a full analysis including spike extraction (timestamps must be provided), feature set extraction, template computation, and classification evaluation.
 
